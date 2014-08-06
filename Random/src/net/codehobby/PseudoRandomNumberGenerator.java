@@ -5,18 +5,25 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
 
-public class PseudoRandomNumberGenerator{
-	private static byte[] input;
-	private static BigInteger keyInt;
+public class PseudoRandomNumberGenerator
+{
+	private static byte[] initializationVector;
+	private static BigInteger counter;
+	private static byte[] key;
 
-	public static void setInput( byte[] newInput )
+	public static void setIV( byte[] newInitializationVector )
 	{
-		input = newInput;
+		initializationVector = newInitializationVector;
 	}
 
-	public static void setKey( BigInteger newKey )
+	public static void setCounter( BigInteger newCounter )
 	{
-		keyInt = newKey;
+		counter = newCounter;
+	}
+
+	public static void setkey( byte[] newKey )
+	{
+		key = newKey;
 	}
 
 	public static byte[] generate() throws Exception
@@ -28,11 +35,11 @@ public class PseudoRandomNumberGenerator{
 		
 		//BigInteger keyInt = new BigInteger( 1, keyBytes );//Translate the key into a positive two's-compliment integer.
 
-		SecretKeySpec key = new SecretKeySpec(keyInt.toByteArray(), "AES");
+		SecretKeySpec sKey = new SecretKeySpec( key, "AES" );
 
 		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS7Padding");
 
-		cipher.init(Cipher.ENCRYPT_MODE, key);
+		cipher.init(Cipher.ENCRYPT_MODE, sKey);
 
 		byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
 		cipher.doFinal(input, 0, input.length, cipherText, 0);
