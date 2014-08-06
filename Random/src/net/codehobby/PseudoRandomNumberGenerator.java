@@ -21,7 +21,7 @@ public class PseudoRandomNumberGenerator
 		counter = newCounter;
 	}
 
-	public static void setkey( byte[] newKey )
+	public static void setKey( byte[] newKey )
 	{
 		key = newKey;
 	}
