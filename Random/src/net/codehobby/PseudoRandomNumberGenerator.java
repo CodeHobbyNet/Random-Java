@@ -10,6 +10,7 @@ public class PseudoRandomNumberGenerator
 	private static byte[] initializationVector;
 	private static BigInteger counter;
 	private static byte[] key;
+        private static byte[] cipherText;
 
 	public static void setIV( byte[] newInitializationVector )
 	{
@@ -35,18 +36,30 @@ public class PseudoRandomNumberGenerator
 		
 		//BigInteger keyInt = new BigInteger( 1, keyBytes );//Translate the key into a positive two's-compliment integer.
 
+		byte[] input;
+                
+		if( cipherText.length == 0 )
+                {//If cipherText is empty, this is the first time the method has been run.
+                    input = counter.xor( new BigInteger(initializationVector) ).toByteArray();
+                }
+                else
+                {//cipherText isn't emtpy because this method has run before, so use cipherText.
+                    input = counter.xor( new BigInteger(cipherText) ).toByteArray();
+                }
+                
 		SecretKeySpec sKey = new SecretKeySpec( key, "AES" );
 
 		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS7Padding");
 
 		cipher.init(Cipher.ENCRYPT_MODE, sKey);
 
-		byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
+		cipherText = new byte[cipher.getOutputSize(input.length)];
 		cipher.doFinal(input, 0, input.length, cipherText, 0);
-		System.out.println(new String(cipherText));
+		//System.out.println(new String(cipherText));
 
 		//Set up for the next iteration
-		input = cipherText;
-		keyInt = keyInt.add(1);
+		counter = counter.add( BigInteger.valueOf(1) );
+                
+                return cipherText;
 	}
 }
