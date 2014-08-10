@@ -38,7 +38,7 @@ public class PseudoRandomNumberGenerator
 
 		byte[] input;
                 
-		if( cipherText.length == 0 )
+		if( cipherText == null )
                 {//If cipherText is empty, this is the first time the method has been run.
                     input = counter.xor( new BigInteger(initializationVector) ).toByteArray();
                 }
@@ -49,7 +49,7 @@ public class PseudoRandomNumberGenerator
                 
 		SecretKeySpec sKey = new SecretKeySpec( key, "AES" );
 
-		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS7Padding");
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 
 		cipher.init(Cipher.ENCRYPT_MODE, sKey);
 
@@ -62,4 +62,16 @@ public class PseudoRandomNumberGenerator
                 
                 return cipherText;
 	}
+        
+        public static String bytesToHex( byte[] bites )
+        {//Convert an array of bytes to a hex string for printing.
+            StringBuilder strBuilder = new StringBuilder();
+            
+            for( byte bite : bites )
+            {//Go through each byte and append it to the string as a couple hex characters.
+                strBuilder.append( String.format("%02x", bite&0xff) );
+            }
+            
+            return strBuilder.toString();
+        }
 }
