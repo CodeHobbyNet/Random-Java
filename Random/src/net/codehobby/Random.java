@@ -17,16 +17,17 @@ public class Random {
         BigInteger counter = new BigInteger( "7486667286DEEB44A3C7C89658C73B25", 16 );
         BigInteger key = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D08", 16 );
         //BigInteger key = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D0837", 16 );
+        PseudoRandomNumberGenerator prng = new PseudoRandomNumberGenerator();
         
-        PseudoRandomNumberGenerator.setIV( initializationVector.toByteArray() );
-        PseudoRandomNumberGenerator.setCounter( counter );
-        PseudoRandomNumberGenerator.setKey( key.toByteArray() );
+        prng.setIV( initializationVector.toByteArray() );
+        prng.setCounter( counter );
+        prng.setKey( key.toByteArray() );
         
         for( int i = 0; i < 100; i++ )
         {
             try
             {
-                System.out.println( PseudoRandomNumberGenerator.bytesToHex(PseudoRandomNumberGenerator.generate()) );
+                System.out.println( PseudoRandomNumberGenerator.bytesToHex(prng.generate()) );
                 System.out.println();
             }
             catch( Exception e )
