@@ -4,13 +4,16 @@ package net.codehobby;
 import java.math.BigInteger;
 
 /**
- *
+ * This is just a basic use of the PseudoRandomNumberGenerator class to show how it works and to test it.
+ * 
  * @author Jeff Crone
  */
 public class Random {
 
     /**
-     * @param args the command line arguments
+     * The starting point for the class. It creates a PseudoRandomNumberGenerator object and uses it to generate pseudo-random data.
+     * 
+     * @param args The command line arguments. So far they're not used.
      */
     public static void main(String[] args) {
         BigInteger initializationVector = new BigInteger( "1A024F91E8150033B974CD817BA67EB4", 16 );

@@ -5,6 +5,15 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
 
+/**
+ * This is a pseudo-random number generator. It's mainly meant for use by various other Java applications I intend to 
+ * write in the future.
+ * <p>
+ * The design for the pseudo-random number generator was inspired by the description of the pseudo-random number 
+ * generator on GRC's Ultra High Security Password Generator at https://www.grc.com/passwords.htm
+ * 
+ * @author Jeff Crone
+ */
 public class PseudoRandomNumberGenerator
 {
 	private byte[] initializationVector;
@@ -12,21 +21,51 @@ public class PseudoRandomNumberGenerator
 	private byte[] key;
         private byte[] cipherText;
 
+        /**
+         * Sets the Initialization Vector. The Initialization Vector will be used once at the beginning to 
+         * help initialize the encryption process.
+         * 
+         * @param newInitializationVector The value to assign to the Initialization Vector. The value should be 16 bytes (128 bits) long and ideally as random as possible.
+         */
 	public void setIV( byte[] newInitializationVector )
 	{
 		initializationVector = newInitializationVector;
 	}
 
+        /**
+         * Sets the counter. The counter is incremented each time random info is generated and is 
+         * xor-ed with either the Initialization Vector or the previous ciphertext to feed into the 
+         * AES encryption process.
+         * 
+         * @param newCounter The value to assign to the counter. The value should be 16 bytes (128 bits) long and ideally as random as possible.
+         */
 	public void setCounter( BigInteger newCounter )
 	{
 		counter = newCounter;
 	}
 
+        /**
+         * Sets the encryption key for the AES encryption.
+         * 
+         * @param newKey The value to assign to the key. The value should be 32 bytes (256 bits) long and ideally as random as possible.
+         */
 	public void setKey( byte[] newKey )
 	{
 		key = newKey;
 	}
 
+        /**
+         * This is the meat of the pseudo-random number generator. It's what generates the random bytes.
+         * <p>
+         * The method sets up the input bytes for the AES encryption by xor-ing the counter with either the 
+         * Initialization Vector if this is the first run through or the previous run through's ciphertext if not.
+         * The method then sets up the encrpytion to use AES in CBC (Cipher Block Chaining) mode.
+         * After that, the method uses the input bytes with the key to generate 128 bits (16 bytes) of 
+         * pseudo-random data in the form of an array of bytes.
+         * 
+         * @return An array of 16 bytes representing the pseudo-random data generate this time around.
+         * @throws Exception the Cipher object can throw either a NoSuchAlgorithmException, an InvalidKeyException, or an IllegalBlcokSizeException.
+         */
 	public byte[] generate() throws Exception
 	{//Generate some pseudo-random bytes.
 		byte[] input;
@@ -54,7 +93,13 @@ public class PseudoRandomNumberGenerator
                 
                 return cipherText;
 	}
-        
+
+        /**
+         * Returns a string representation of the value of the bites parameter in hex format.
+         * 
+         * @param bites The binary data to format as a hex string.
+         * @return A string representation in hex format of the binary data in bites.
+         */
         public static String bytesToHex( byte[] bites )
         {//Convert an array of bytes to a hex string for printing.
             StringBuilder strBuilder = new StringBuilder();
@@ -63,8 +108,6 @@ public class PseudoRandomNumberGenerator
             {//Go through each byte and append it to the string as a couple hex characters.
                 strBuilder.append( String.format("%02x", bite&0xff) );
             }
-            
-            //System.out.println( strBuilder.toString().length() );
             
             return strBuilder.toString();
         }
