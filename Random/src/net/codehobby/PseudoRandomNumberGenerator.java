@@ -20,6 +20,17 @@ public class PseudoRandomNumberGenerator
 	private BigInteger counter;
 	private byte[] key;
         private byte[] cipherText;
+        private boolean iVSet, counterSet, keySet;
+
+        /**
+         * Default constructor. Sets the *Set boolean values to false so this object knows they haven't been set yet.
+         */
+        public PseudoRandomNumberGenerator()
+        {
+            iVSet = false;
+            counterSet = false;
+            keySet = false;
+        }
 
         /**
          * Sets the Initialization Vector. The Initialization Vector will be used once at the beginning to 
@@ -30,6 +41,7 @@ public class PseudoRandomNumberGenerator
 	public void setIV( byte[] newInitializationVector )
 	{
 		initializationVector = newInitializationVector;
+                iVSet = true;
 	}
 
         /**
@@ -42,6 +54,7 @@ public class PseudoRandomNumberGenerator
 	public void setCounter( BigInteger newCounter )
 	{
 		counter = newCounter;
+                counterSet = true;
 	}
 
         /**
@@ -52,6 +65,7 @@ public class PseudoRandomNumberGenerator
 	public void setKey( byte[] newKey )
 	{
 		key = newKey;
+                keySet = true;
 	}
 
         /**
@@ -64,12 +78,26 @@ public class PseudoRandomNumberGenerator
          * pseudo-random data in the form of an array of bytes.
          * 
          * @return An array of 16 bytes representing the pseudo-random data generate this time around.
-         * @throws Exception the Cipher object can throw either a NoSuchAlgorithmException, an InvalidKeyException, or an IllegalBlcokSizeException.
+         * @throws Exception The Cipher object can throw either a NoSuchAlgorithmException, an InvalidKeyException, or an IllegalBlcokSizeException. Also throws an IllegalStateException if any of the *Set variables aren't set yet.
          */
 	public byte[] generate() throws Exception
 	{//Generate some pseudo-random bytes.
 		byte[] input;
-                
+
+                if( !iVSet )
+                {//If iVSet is false, indicating the Initialization Vector isn't set, throw an exception.
+                    throw new IllegalStateException( "The Initialization Vector isn't set." );
+                }
+                else if( !counterSet )
+                {//If counterSet is false, indicating the counter isn't set, throw an exception.
+                    throw new IllegalStateException( "The counter isn't set." );
+                }
+                else if( !keySet )
+                {//If keySet false, indicating the key isn't set, throw an exception.
+                    throw new IllegalStateException( "The key isn't set." );
+                }
+
+
 		if( cipherText == null )
                 {//If cipherText is empty, this is the first time the method has been run. Use the Initialization Vector.
                     input = counter.xor( new BigInteger(initializationVector) ).toByteArray();
