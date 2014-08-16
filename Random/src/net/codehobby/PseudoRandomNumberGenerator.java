@@ -5,11 +5,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.security.Security;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.HttpsURLConnection;
+import com.google.gson.JsonObject;
+import java.net.ProtocolException;
 
 /**
  * This is a pseudo-random number generator. It's mainly meant for use by various other Java applications I intend to 
@@ -155,6 +161,7 @@ public class PseudoRandomNumberGenerator
             //Get the API Key from the file APIKey.txt
             String keyFileName = "APIKey.txt";
             String APIKey;
+            
             try {
                 BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
                 APIKey = keyFileReader.readLine();
@@ -167,7 +174,43 @@ public class PseudoRandomNumberGenerator
             
             //Uee the API key to get some random data from Random.org
             //See https://api.random.org/json-rpc/1/request-builder
-            System.err.println( "The part to contact Random.org hasn't been writtten yet.");
+            //See the method around line 2068 of RandomOrgClient.java of the project at https://github.com/RandomOrg/JSON-RPC-Java
+            System.err.println( "The part to contact Random.org hasn't been finished yet.");
+            
+            String URLText = "https://api.random.org/json-rpc/1/invoke";
+            JsonObject jsonData;
+            
+            //Create the JSON data to send to Random.org.
+            System.err.println( "Still working on creating the JSON data to send to Random.org.");
+            
+            try {
+                HttpsURLConnection connection = (HttpsURLConnection) new URL( URLText ).openConnection();//Open the connection.
+                connection.setConnectTimeout(5000);//Set the timeout to 5 seconds.
+                
+                //Set the headers
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                
+                //Still have to send and retrienve the JSON data.
+                System.err.println( "Stopped here.");
+            } catch( MalformedURLException ex ) {
+                System.out.println( "The URL " + URLText + "was malformed." );
+                System.out.println( "Error Message: " + ex.getMessage() );
+                ex.printStackTrace();
+            } catch( SocketTimeoutException e ) {
+                System.out.println( "The connection to Random.org timed out." );
+                System.out.println( "Error Message: " + e.getMessage() );
+                e.printStackTrace();
+            } catch (ProtocolException ex) {
+                System.out.println( "The protocol (probably POST protocol) isn't supported." );
+                System.out.println( "Error Message: " + ex.getMessage() );
+                ex.printStackTrace();
+            } catch (IOException ex) {
+                System.out.println( "Input/Output exception." );
+                System.out.println( "Error Message: " + ex.getMessage() );
+                ex.printStackTrace();
+            }
+            
             
         }
 }
