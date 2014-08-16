@@ -1,9 +1,15 @@
 package net.codehobby;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.security.Security;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.math.BigInteger;
 
 /**
  * This is a pseudo-random number generator. It's mainly meant for use by various other Java applications I intend to 
@@ -73,7 +79,7 @@ public class PseudoRandomNumberGenerator
          * <p>
          * The method sets up the input bytes for the AES encryption by xor-ing the counter with either the 
          * Initialization Vector if this is the first run through or the previous run through's ciphertext if not.
-         * The method then sets up the encrpytion to use AES in CBC (Cipher Block Chaining) mode.
+         * The method then sets up the encryption to use AES in CBC (Cipher Block Chaining) mode.
          * After that, the method uses the input bytes with the key to generate 128 bits (16 bytes) of 
          * pseudo-random data in the form of an array of bytes.
          * 
@@ -138,5 +144,30 @@ public class PseudoRandomNumberGenerator
             }
             
             return strBuilder.toString();
+        }
+        
+        /**
+         * Gets some random data from the web and uses that data to set initializationVector, key and counter. 
+         * Currently set to get data from Random.org's API.
+         */
+        private void getRandomDataFromWeb()
+        {
+            //Get the API Key from the file APIKey.txt
+            String keyFileName = "APIKey.txt";
+            String APIKey;
+            try {
+                BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
+                APIKey = keyFileReader.readLine();
+            } catch (FileNotFoundException ex) {
+                System.err.println( keyFileName + " wasn't found." );
+            } catch (IOException ex) {
+                System.err.println( "Error reading " + keyFileName );
+            }
+            System.err.println( "Check if there are errors reading the API Key file." );
+            
+            //Uee the API key to get some random data from Random.org
+            //See https://api.random.org/json-rpc/1/request-builder
+            System.err.println( "The part to contact Random.org hasn't been writtten yet.");
+            
         }
 }
