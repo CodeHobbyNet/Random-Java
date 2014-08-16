@@ -40,6 +40,8 @@ public class Random {
                 break;
             }
         }
+        
+        prng.getRandomDataFromWeb();
     }
     
 }
