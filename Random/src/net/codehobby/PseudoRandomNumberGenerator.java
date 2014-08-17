@@ -15,7 +15,9 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.Security;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +50,25 @@ public class PseudoRandomNumberGenerator
             iVSet = false;
             counterSet = false;
             keySet = false;
+            
+            getRandomDataFromWeb();
+        }
+        
+        /**
+         * Constructor that sets the initial values.
+         * @param newInitializationVector The new InitializationVector.
+         * @param newCounter The new Counter.
+         * @param newKey The new Key.
+         */
+        public PseudoRandomNumberGenerator( byte[] newInitializationVector, BigInteger newCounter, byte[] newKey )
+        {
+            iVSet = false;
+            counterSet = false;
+            keySet = false;
+            
+            setIV( newInitializationVector );
+            setCounter( newCounter.toByteArray() );
+            setKey( newKey );
         }
 
         /**
@@ -58,8 +79,15 @@ public class PseudoRandomNumberGenerator
          */
 	public void setIV( byte[] newInitializationVector )
 	{
+            if( newInitializationVector.length == 16 )
+            {//If the length is right, 16 bytes (128 bits), go ahead and save the value.
 		initializationVector = newInitializationVector;
                 iVSet = true;
+            }
+            else
+            {//If the lenght isn't right, throw an error.
+                throw new IllegalArgumentException( "The key argument needs to be 16 bytes (128 bits)." );
+            }
 	}
 
         /**
@@ -69,10 +97,17 @@ public class PseudoRandomNumberGenerator
          * 
          * @param newCounter The value to assign to the counter. The value should be 16 bytes (128 bits) long and ideally as random as possible.
          */
-	public void setCounter( BigInteger newCounter )
+	public void setCounter( byte[] newCounter )
 	{
-		counter = newCounter;
+            if( newCounter.length == 16 )
+            {//If the length is right, 16 bytes (128 bits), go ahead and save the value.
+		counter = new BigInteger( newCounter );
                 counterSet = true;
+            }
+            else
+            {//If the lenght isn't right, throw an error.
+                throw new IllegalArgumentException( "The counter argument needs to be 16 bytes (128 bits)." );
+            }
 	}
 
         /**
@@ -82,8 +117,15 @@ public class PseudoRandomNumberGenerator
          */
 	public void setKey( byte[] newKey )
 	{
+            if( newKey.length == 32 )
+            {//If the length is right, 32 bytes (256 bits), go ahead and save the value.
 		key = newKey;
                 keySet = true;
+            }
+            else
+            {//If the lenght isn't right, throw an error.
+                throw new IllegalArgumentException( "The key argument needs to be 32 bytes (256 bits)." );
+            }
 	}
 
         /**
@@ -138,7 +180,7 @@ public class PseudoRandomNumberGenerator
 
 		cipher.init(Cipher.ENCRYPT_MODE, sKey);
 
-                System.out.println( "Input length: " + input.length );
+                //System.out.println( "Input length: " + input.length );
 		cipherText = cipher.doFinal(input, 0, input.length);
 
 		//Set up for the next iteration
@@ -166,6 +208,25 @@ public class PseudoRandomNumberGenerator
         }
         
         /**
+         * Interprets hexValue as a string of a hexadecimal number and returns an array of bytes equivalent to that number.
+         * @param hexValue A string with a hexadecimal number inside.
+         * @return An array of bytes corresponding to the value of the number in hexValue.
+         */
+        public static byte[] hexToBytes( String hexValue )
+        {
+            //List<Byte> bites = new ArrayList<Byte>();
+            
+            byte[] bites = new byte[hexValue.length()/2];
+            for( int i = 0; i < hexValue.length(); i+=2 )
+            {//Go through each 2 characters and add them as bytes to bites.
+                bites[i/2] = Byte.parseByte(hexValue.substring(i, i+1), 16);
+            }
+            
+            return bites;
+            //return new BigInteger( hexValue, 16 ).toByteArray();
+        }
+        
+        /**
          * Gets some random data from the web and uses that data to set initializationVector, key and counter. 
          * Currently set to get data from Random.org's API.
          */
@@ -174,6 +235,8 @@ public class PseudoRandomNumberGenerator
             //Get the API Key from the file APIKey.txt
             String keyFileName = "APIKey.txt";
             String APIKey = "";
+            int numBitsPerBlob = 128;//The number of bits to request per BLOB from Random.org.
+            int numBlobs = 4;//The number of BLOBs to request from Random.org.
             
             try {
                 BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
@@ -196,23 +259,25 @@ public class PseudoRandomNumberGenerator
             JsonObject jsonResponse = new JsonObject();
             JsonObject params = new JsonObject();
             
-            System.err.println( "Add a check to make sure it's not going over Random.org's request limit" );
+            //System.err.println( "Add a check to make sure it's not going over Random.org's request limit" );
             
             //Create the JSON data to send to Random.org.
-            //System.err.println( "Still working on creating the JSON data to send to Random.org.");
             jsonData.addProperty( "jsonrpc", "2.0" );
             jsonData.addProperty( "method", "generateBlobs" );
             params.addProperty( "apiKey", APIKey );
-            params.addProperty( "n", 4 );
-            params.addProperty( "size", 128 );
+            params.addProperty( "n", numBlobs );
+            params.addProperty( "size", numBitsPerBlob );
             params.addProperty( "format", "hex" );
             jsonData.add( "params", params );
             jsonData.addProperty( "id", UUID.randomUUID().toString() );
-            System.out.println( jsonData.toString() );
+            //System.out.println( jsonData.toString() );
             
             try
             {
-                jsonResponse = fetchFromWeb( jsonData );
+                if( fetchUsageFromWeb(numBitsPerBlob*numBlobs, APIKey) )
+                {//If the request is authorized by Random.org, go ahead and make it.
+                    jsonResponse = fetchFromWeb( jsonData );
+                }
             } catch( MalformedURLException ex ) {
                 System.err.println( "The URL was malformed." );
                 System.err.println( "Error Message: " + ex.getMessage() );
@@ -240,20 +305,25 @@ public class PseudoRandomNumberGenerator
             }
             
             //Take the data from the response and put it in the initialization data.
-            System.out.println( jsonResponse.toString() );
+            //System.out.println( jsonResponse.toString() );
             if( jsonResponse.has("error") )
             {
-                System.err.println( "Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
+                System.err.println( "In getRandomDataFromWeb(), error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
                 System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
             }
             else
             {
                 JsonArray randomBlobs = jsonResponse.getAsJsonObject("result").getAsJsonObject("random").getAsJsonArray("data");
+                setIV( hexToBytes(randomBlobs.get(0).getAsString()) );//Assign the IV to the first blob.
+                setCounter( hexToBytes(randomBlobs.get(1).getAsString()) );//Assign the counter to the second blob.
+                setKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
+                /*
                 for( int i = 0; i < randomBlobs.size(); i++ )
                 {
                     System.out.println( randomBlobs.get(i).getAsString() );
                 }
-                System.err.println( "Add something to add the returned values to the initialization values.");
+                */
+                //System.err.println( "Add something to add the returned values to the initialization values.");
             }
             
         }
@@ -316,13 +386,75 @@ public class PseudoRandomNumberGenerator
          */
         private void setDefaultInitValues()
         {
-            BigInteger initializationVector = new BigInteger( "1A024F91E8150033B974CD817BA67EB4", 16 );
-            BigInteger counter = new BigInteger( "7486667286DEEB44A3C7C89658C73B25", 16 );
-            BigInteger key = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D08", 16 );
+            BigInteger newInitializationVector = new BigInteger( "1A024F91E8150033B974CD817BA67EB4", 16 );
+            BigInteger newCounter = new BigInteger( "7486667286DEEB44A3C7C89658C73B25", 16 );
+            BigInteger newKey = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D08", 16 );
             //BigInteger key = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D0837", 16 );
 
-            setIV( initializationVector.toByteArray() );
-            setCounter( counter );
-            setKey( key.toByteArray() );
+            setIV( newInitializationVector.toByteArray() );
+            setCounter( newCounter.toByteArray() );
+            setKey( newKey.toByteArray() );
+        }
+        
+        /**
+         * Checks the usage statistics from Random.org and returns whether it'll allow another request of initial values.
+         * @param numBits The number of bits that are planned to be requested from Random.org.
+         * @return True if Random.org should allow for the request, ,false if it shouldn't.
+         */
+        private boolean fetchUsageFromWeb( int numBits, String APIKey ) throws IOException, ProtocolException, Exception
+        {
+            JsonObject jsonData = new JsonObject();
+            JsonObject jsonResponse = new JsonObject();
+            JsonObject params = new JsonObject();
+            
+            //Create the JSON data to send to Random.org.
+            jsonData.addProperty( "jsonrpc", "2.0" );
+            jsonData.addProperty( "method", "getUsage" );
+            params.addProperty( "apiKey", APIKey );
+            jsonData.add( "params", params );
+            jsonData.addProperty( "id", UUID.randomUUID().toString() );
+            //System.out.println( jsonData.toString() );
+            
+            jsonResponse = fetchFromWeb( jsonData );
+            
+            //Take the data from the response and put it in the initialization data.
+            //System.out.println( jsonResponse.toString() );
+            if( jsonResponse.has("error") )
+            {
+                System.err.println( "In fetchUsageFromWeb(...), JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
+                System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+                throw new Exception( "JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+            }
+            else
+            {
+                String status = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("status").getAsString();
+                if( status.contentEquals("paused") )
+                {//If the API Key is paused by Random.org, return false.
+                    System.err.println( "The API Key is paused." );
+                    return false;
+                }
+                else
+                {
+                    long requestsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
+                    if( requestsLeft < 1 )
+                    {//If there aren't any more requests left, return false.
+                        System.err.println( "There are no requests left. The requestsLeft field returned by Random.org is " + requestsLeft );
+                        return false;
+                    }
+                    else
+                    {
+                        long bitsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
+                        if( bitsLeft < numBits )
+                        {//If there aren't any more requests left, return false.
+                            System.err.println( "There aren't enough bits left to request. Random.org says it'll only allow a request of up to " + bitsLeft + " bits.");
+                            return false;
+                        }
+                        else
+                        {//There is nothing blocking the request per Random.org. Return true.
+                            return true;
+                        }
+                    }
+                }
+            }
         }
 }
