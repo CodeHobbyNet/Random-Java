@@ -4,9 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
@@ -40,7 +43,9 @@ public class PseudoRandomNumberGenerator
 	private BigInteger counter;
 	private byte[] key;
         private byte[] cipherText;
-        private boolean iVSet, counterSet, keySet;
+        private boolean iVSet, counterSet, encryptionKeySet;
+        private String keyFileName;
+        private String APIKey;
 
         /**
          * Default constructor. Sets the *Set boolean values to false so this object knows they haven't been set yet.
@@ -49,7 +54,11 @@ public class PseudoRandomNumberGenerator
         {
             iVSet = false;
             counterSet = false;
-            keySet = false;
+            encryptionKeySet = false;
+            keyFileName = "APIKey.txt";
+            APIKey = "";
+            
+            fetchAPIKeyFromFile();
             
             getRandomDataFromWeb();
         }
@@ -64,11 +73,15 @@ public class PseudoRandomNumberGenerator
         {
             iVSet = false;
             counterSet = false;
-            keySet = false;
+            encryptionKeySet = false;
+            keyFileName = "APIKey.txt";
+            APIKey = "";
             
             setIV( newInitializationVector );
             setCounter( newCounter.toByteArray() );
-            setKey( newKey );
+            setEncryptionKey( newKey );
+            
+            fetchAPIKeyFromFile();
         }
 
         /**
@@ -115,18 +128,36 @@ public class PseudoRandomNumberGenerator
          * 
          * @param newKey The value to assign to the key. The value should be 32 bytes (256 bits) long and ideally as random as possible.
          */
-	public void setKey( byte[] newKey )
+	public void setEncryptionKey( byte[] newKey )
 	{
             if( newKey.length == 32 )
             {//If the length is right, 32 bytes (256 bits), go ahead and save the value.
 		key = newKey;
-                keySet = true;
+                encryptionKeySet = true;
             }
             else
             {//If the lenght isn't right, throw an error.
                 throw new IllegalArgumentException( "The key argument needs to be 32 bytes (256 bits)." );
             }
 	}
+        
+        /**
+         * Sets newKeyFileName to the filename the program will look to for the Random.org API key. The file should be a text file containing only the key.
+         * @param newKeyFileName The filename containing the key.
+         */
+        public void setAPIKeyFileName( String newKeyFileName )
+        {
+            keyFileName = newKeyFileName;
+        }
+        
+        /**
+         * Sets the Random.org API key to newKey.
+         * @param newKey The value of the Random.org API key.
+         */
+        public void setAPIKey( String newKey )
+        {
+            APIKey = newKey;
+        }
 
         /**
          * This is the meat of the pseudo-random number generator. It's what generates the random bytes.
@@ -152,8 +183,8 @@ public class PseudoRandomNumberGenerator
                 {//If counterSet is false, indicating the counter isn't set, throw an exception.
                     throw new IllegalStateException( "The counter isn't set." );
                 }
-                else if( !keySet )
-                {//If keySet false, indicating the key isn't set, throw an exception.
+                else if( !encryptionKeySet )
+                {//If encryptionKeySet false, indicating the key isn't set, throw an exception.
                     throw new IllegalStateException( "The key isn't set." );
                 }
 
@@ -233,22 +264,9 @@ public class PseudoRandomNumberGenerator
         public void getRandomDataFromWeb()
         {
             //Get the API Key from the file APIKey.txt
-            String keyFileName = "APIKey.txt";
-            String APIKey = "";
             int numBitsPerBlob = 128;//The number of bits to request per BLOB from Random.org.
             int numBlobs = 4;//The number of BLOBs to request from Random.org.
             
-            try {
-                BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
-                APIKey = keyFileReader.readLine();
-            } catch (FileNotFoundException ex) {
-                System.err.println( keyFileName + " wasn't found." );
-                setDefaultInitValues();
-            } catch (IOException ex) {
-                System.err.println( "Error reading " + keyFileName );
-                setDefaultInitValues();
-            }
-            //System.err.println( "Check if there are errors reading the API Key file." );
             
             //Uee the API key to get some random data from Random.org
             //See https://api.random.org/json-rpc/1/request-builder
@@ -316,7 +334,7 @@ public class PseudoRandomNumberGenerator
                 JsonArray randomBlobs = jsonResponse.getAsJsonObject("result").getAsJsonObject("random").getAsJsonArray("data");
                 setIV( hexToBytes(randomBlobs.get(0).getAsString()) );//Assign the IV to the first blob.
                 setCounter( hexToBytes(randomBlobs.get(1).getAsString()) );//Assign the counter to the second blob.
-                setKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
+                setEncryptionKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
                 /*
                 for( int i = 0; i < randomBlobs.size(); i++ )
                 {
@@ -326,6 +344,41 @@ public class PseudoRandomNumberGenerator
                 //System.err.println( "Add something to add the returned values to the initialization values.");
             }
             
+        }
+        
+        /**
+         * Gets the Random.org API key from the file pointed to by keyFileName.
+         */
+        public void fetchAPIKeyFromFile()
+        {
+            try {
+                BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
+                APIKey = keyFileReader.readLine();
+            } catch (FileNotFoundException ex) {
+                System.err.println( keyFileName + " wasn't found." );
+                setDefaultInitValues();
+            } catch (IOException ex) {
+                System.err.println( "Error reading " + keyFileName );
+                setDefaultInitValues();
+            }
+        }
+        
+        /**
+         * Gets the Random.org API key from the file pointed to by tempKeyFileName. The file should be a text file with only the key in it.
+         * @param tempKeyFileName The filename of the file containing the Random.org API key.
+         */
+        public void fetchAPIKeyFromFile( String tempKeyFileName )
+        {
+            try {
+                BufferedReader keyFileReader = new BufferedReader( new FileReader(tempKeyFileName) );
+                APIKey = keyFileReader.readLine();
+            } catch (FileNotFoundException ex) {
+                System.err.println( keyFileName + " wasn't found." );
+                setDefaultInitValues();
+            } catch (IOException ex) {
+                System.err.println( "Error reading " + keyFileName );
+                setDefaultInitValues();
+            }
         }
         
         /**
@@ -393,7 +446,7 @@ public class PseudoRandomNumberGenerator
 
             setIV( newInitializationVector.toByteArray() );
             setCounter( newCounter.toByteArray() );
-            setKey( newKey.toByteArray() );
+            setEncryptionKey( newKey.toByteArray() );
         }
         
         /**
@@ -455,6 +508,62 @@ public class PseudoRandomNumberGenerator
                         }
                     }
                 }
+            }
+        }
+        
+        /**
+         * Saves some pseudo-random data to a file either as hex or bytes.
+         * @param filename The filename of the file to save data to.
+         * @param numGroups The number of outputs of generate to save.
+         * @param asHex
+         * @throws Exception If an exception is generated during the generation of the pseudo-random data.
+         */
+        public void savePseudoRandomDataToFile( String filename, long numGroups, boolean asHex ) throws Exception
+        {
+            System.out.println( "Filename: " + filename );
+            System.out.println( "numGroups: " + numGroups );
+            System.out.println( "asHex: " + asHex );
+            DataOutputStream binaryOutput = null;
+            BufferedWriter textWriter = null;
+            try {
+                binaryOutput = new DataOutputStream( new FileOutputStream(filename, true) );//Create the file output stream. Will append to the file.
+                textWriter = new BufferedWriter( new FileWriter(filename, true) );
+                
+                int i = 0;
+                while( i < numGroups )
+                {//Iterate until it gets to the number of groups as a parameter.
+                    byte[] group = generate();//Generate the pseudo-random data
+                    if( asHex )
+                    {
+                        textWriter.write( bytesToHex(group) + "\n" );//Write the random data as hex to the file.
+                    }
+                    else
+                    {
+                        System.out.println( "Writing as binary." );
+                        for( byte bite : group )
+                        {
+                            binaryOutput.writeByte(bite);
+                        }
+                    }
+                    
+                    i++;
+                }
+                
+                
+                
+            } catch (FileNotFoundException ex) {
+                System.err.println( "File not found error for file \"" + filename + "\": ");
+                System.err.println( ex.getMessage() );
+                ex.printStackTrace();
+            } catch (IOException ex) {
+                System.err.println( "IO Exception for file \"" + filename + "\": ");
+                System.err.println( ex.getMessage() );
+                ex.printStackTrace();
+            }
+            finally
+            {
+                //binaryOutput.close();//Close the file.
+                textWriter.close();//Close the file.
             }
         }
 }

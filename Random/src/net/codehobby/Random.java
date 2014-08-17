@@ -2,6 +2,8 @@
 package net.codehobby;
 
 import java.math.BigInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This is just a basic use of the PseudoRandomNumberGenerator class to show how it works and to test it.
@@ -23,18 +25,59 @@ public class Random {
         //BigInteger key = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D0837", 16 );
         */
         PseudoRandomNumberGenerator prng = new PseudoRandomNumberGenerator();
+        long numGroups = 10;
+        String outputFileName = "output.txt";
+        boolean hex = true;
         
+        //Get the command line parameters
+        if( args.length > 0 )
+        {
+            numGroups = Long.parseLong( args[0] );
+            
+            if( args.length > 1 )
+            {
+                outputFileName = args[1];
+                
+                if( args.length > 2 )
+                {
+                    if( args[2].equalsIgnoreCase("true") )
+                    {
+                        hex = true;
+                    }
+                    else if( args[2].equalsIgnoreCase("false") )
+                    {
+                        hex = false;
+                    }
+                    else
+                    {
+                        System.err.println( "The third argument should be true or false." );
+                    }
+                }
+                
+                if( args.length > 3 )
+                {
+                    System.err.println( "There should be 3 arguments, the number of groups to generate, the filename, and whether to save it as hex." );
+                }
+            }
+        }
         /*
         prng.setIV( initializationVector.toByteArray() );
         prng.setCounter( counter );
         prng.setKey( key.toByteArray() );
         */
         
-        for( int i = 0; i < 100; i++ )
+        for( int i = 0; i < numGroups; i++ )
         {
             try
             {
-                System.out.println( PseudoRandomNumberGenerator.bytesToHex(prng.generate()) );
+                if( hex )
+                {
+                    System.out.println( PseudoRandomNumberGenerator.bytesToHex(prng.generate()) );
+                }
+                else
+                {
+                    System.out.println( prng.generate() );
+                }
                 System.out.println();
             }
             catch( Exception e )
@@ -45,7 +88,12 @@ public class Random {
             }
         }
         
-        //prng.getRandomDataFromWeb();
+        try {
+            prng.savePseudoRandomDataToFile(outputFileName, numGroups, hex);
+        } catch (Exception ex) {
+            System.err.println( "Error saving pesudo-random data to \"" + outputFileName + "\": " + ex.getMessage() );
+            ex.printStackTrace();
+        }
     }
     
 }
