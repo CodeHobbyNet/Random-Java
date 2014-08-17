@@ -1,4 +1,4 @@
 Random-Java
 ===========
 
-A few Java functions to generate random data.
+A small Java program to generate random data.
