@@ -520,9 +520,6 @@ public class PseudoRandomNumberGenerator
          */
         public void savePseudoRandomDataToFile( String filename, long numGroups, boolean asHex ) throws Exception
         {
-            System.out.println( "Filename: " + filename );
-            System.out.println( "numGroups: " + numGroups );
-            System.out.println( "asHex: " + asHex );
             DataOutputStream binaryOutput = null;
             BufferedWriter textWriter = null;
             try {
