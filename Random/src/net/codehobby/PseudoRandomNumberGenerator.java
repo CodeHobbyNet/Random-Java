@@ -536,7 +536,7 @@ public class PseudoRandomNumberGenerator
                     }
                     else
                     {
-                        System.out.println( "Writing as binary." );
+                        //System.out.println( "Writing as binary." );
                         for( byte bite : group )
                         {
                             binaryOutput.writeByte(bite);
