@@ -351,6 +351,8 @@ public class PseudoRandomNumberGenerator
          */
         public void fetchAPIKeyFromFile()
         {
+            fetchAPIKeyFromFile( keyFileName );
+/*
             try {
                 BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
                 APIKey = keyFileReader.readLine();
@@ -361,6 +363,7 @@ public class PseudoRandomNumberGenerator
                 System.err.println( "Error reading " + keyFileName );
                 setDefaultInitValues();
             }
+*/
         }
         
         /**
