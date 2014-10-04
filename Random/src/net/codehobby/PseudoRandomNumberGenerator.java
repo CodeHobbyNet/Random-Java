@@ -221,6 +221,41 @@ public class PseudoRandomNumberGenerator
 	}
 
         /**
+         * Returns a pseudo-random BigInteger based off the generate method.
+         * 
+         * @return A pseudo-random BigInteger.
+         * @throws Exception Throws a NoSuchAlgorithmException, an InvalidKeyException, an IllegalBlcokSizeException, or an IllegalStateException based on the generate() method.
+         */
+        public BigInteger getPseudoRandomBigInteger() throws Exception
+        {
+            return new BigInteger( generate() );
+        }
+
+        /**
+         * Returns a pseudo-random BigInteger within the range of integers between low and high, inclusive.
+         * 
+         * @param low The lowest possible value of the returned BigInteger.
+         * @param high The highest possible value of the returned BigInteger.
+         * @return A pseudo-random BigInteger between low and high, inclusive.
+         * @throws Exception Throws a NoSuchAlgorithmException, an InvalidKeyException, an IllegalBlcokSizeException, or an IllegalStateException based on the generate() method.
+         */
+        public BigInteger getPseudoRandomBigIntegerRange( BigInteger low, BigInteger high ) throws Exception
+        {
+            return (new BigInteger(generate())).abs().mod(low).add(high);
+        }
+
+        /**
+         * Returns a pseudo-random String of hexadecimal characters based off the generate method.
+         * 
+         * @return A pseudo-random String of hexadecimal characters.
+         * @throws Exception Throws a NoSuchAlgorithmException, an InvalidKeyException, an IllegalBlcokSizeException, or an IllegalStateException based on the generate() method.
+         */
+        public String getPseudoRandomHexString() throws Exception
+        {
+            return bytesToHex( generate() );
+        }
+
+        /**
          * Returns a string representation of the value of the bites parameter in hex format.
          * 
          * @param bites The binary data to format as a hex string.
