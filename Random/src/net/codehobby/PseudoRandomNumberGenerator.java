@@ -17,13 +17,13 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.security.Security;
-import java.util.ArrayList;
+//import java.security.Security;
+//import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+//import java.util.List;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
@@ -407,8 +407,9 @@ public class PseudoRandomNumberGenerator
          */
         public void fetchAPIKeyFromFile( String tempKeyFileName )
         {
+        	BufferedReader keyFileReader = null;
             try {
-                BufferedReader keyFileReader = new BufferedReader( new FileReader(tempKeyFileName) );
+                keyFileReader = new BufferedReader( new FileReader(tempKeyFileName) );
                 APIKey = keyFileReader.readLine();
             } catch (FileNotFoundException ex) {
                 System.err.println( keyFileName + " wasn't found." );
@@ -416,6 +417,15 @@ public class PseudoRandomNumberGenerator
             } catch (IOException ex) {
                 System.err.println( "Error reading " + keyFileName );
                 setDefaultInitValues();
+            }
+            finally
+            {
+            	try {
+					keyFileReader.close();
+				} catch (IOException e) {
+					System.err.println( "Error closing " + keyFileName );
+					e.printStackTrace();
+				}
             }
         }
         
