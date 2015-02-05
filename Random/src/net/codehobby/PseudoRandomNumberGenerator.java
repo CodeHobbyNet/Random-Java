@@ -27,6 +27,7 @@ import java.util.UUID;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
+import java.security.MessageDigest;
 
 /**
  * This is a pseudo-random number generator. It's mainly meant for use by various other Java applications I intend to 
@@ -168,6 +169,8 @@ public class PseudoRandomNumberGenerator
          * After that, the method uses the input bytes with the key to generate 128 bits (16 bytes) of 
          * pseudo-random data in the form of an array of bytes.
          * 
+         * Update Feb 5, 2015: Changing to SHA-512 hashing instead of AES encryption.
+         * 
          * @return An array of 16 bytes representing the pseudo-random data generate this time around.
          * @throws Exception The Cipher object can throw either a NoSuchAlgorithmException, an InvalidKeyException, or an IllegalBlcokSizeException. Also throws an IllegalStateException if any of the *Set variables aren't set yet.
          */
@@ -204,6 +207,13 @@ public class PseudoRandomNumberGenerator
                     input = newInput;
                 }
                 
+                //Changing to a SHA hash instead of an AES encryption.
+                //MessageDigest md = MessageDigest.getInstance("SHA-256");
+                MessageDigest md = MessageDigest.getInstance("SHA-512");
+                md.update(input);
+ 
+                cipherText = md.digest();
+/*
 		SecretKeySpec sKey = new SecretKeySpec( key, 0, 16, "AES" );
 
 		//Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
@@ -213,7 +223,7 @@ public class PseudoRandomNumberGenerator
 
                 //System.out.println( "Input length: " + input.length );
 		cipherText = cipher.doFinal(input, 0, input.length);
-
+*/
 		//Set up for the next iteration
 		counter = counter.add( BigInteger.valueOf(1) );
                 
@@ -331,6 +341,28 @@ public class PseudoRandomNumberGenerator
                 {//If the request is authorized by Random.org, go ahead and make it.
                     jsonResponse = fetchFromWeb( jsonData );
                 }
+
+                //Take the data from the response and put it in the initialization data.
+                //System.out.println( jsonResponse.toString() );
+                if( jsonResponse.has("error") )
+                {
+                    System.err.println( "In getRandomDataFromWeb(), error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
+                    System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+                }
+                else
+                {
+                    JsonArray randomBlobs = jsonResponse.getAsJsonObject("result").getAsJsonObject("random").getAsJsonArray("data");
+                    setIV( hexToBytes(randomBlobs.get(0).getAsString()) );//Assign the IV to the first blob.
+                    setCounter( hexToBytes(randomBlobs.get(1).getAsString()) );//Assign the counter to the second blob.
+                    setEncryptionKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
+                    /*
+                    for( int i = 0; i < randomBlobs.size(); i++ )
+                    {
+                        System.out.println( randomBlobs.get(i).getAsString() );
+                    }
+                    */
+                    //System.err.println( "Add something to add the returned values to the initialization values.");
+                }
             } catch( MalformedURLException ex ) {
                 System.err.println( "The URL was malformed." );
                 System.err.println( "Error Message: " + ex.getMessage() );
@@ -355,28 +387,6 @@ public class PseudoRandomNumberGenerator
                 System.err.println( "Exception: " + ex.getMessage() );
                 ex.printStackTrace();
                 setDefaultInitValues();
-            }
-            
-            //Take the data from the response and put it in the initialization data.
-            //System.out.println( jsonResponse.toString() );
-            if( jsonResponse.has("error") )
-            {
-                System.err.println( "In getRandomDataFromWeb(), error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
-                System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
-            }
-            else
-            {
-                JsonArray randomBlobs = jsonResponse.getAsJsonObject("result").getAsJsonObject("random").getAsJsonArray("data");
-                setIV( hexToBytes(randomBlobs.get(0).getAsString()) );//Assign the IV to the first blob.
-                setCounter( hexToBytes(randomBlobs.get(1).getAsString()) );//Assign the counter to the second blob.
-                setEncryptionKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
-                /*
-                for( int i = 0; i < randomBlobs.size(); i++ )
-                {
-                    System.out.println( randomBlobs.get(i).getAsString() );
-                }
-                */
-                //System.err.println( "Add something to add the returned values to the initialization values.");
             }
             
         }
@@ -421,11 +431,16 @@ public class PseudoRandomNumberGenerator
             finally
             {
             	try {
-					keyFileReader.close();
-				} catch (IOException e) {
-					System.err.println( "Error closing " + keyFileName );
-					e.printStackTrace();
-				}
+                    keyFileReader.close();
+		} catch (IOException e)
+                {
+                    System.err.println( "Error closing " + keyFileName );
+                    e.printStackTrace();
+		} catch (Exception e)
+                {
+                    System.err.println( "Error closing " + keyFileName );
+                    e.printStackTrace();
+		}
             }
         }
         
