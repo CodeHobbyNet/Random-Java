@@ -1,0 +1,1 @@
+<?xml version="1.0" ?><project default="main">	<target name="main" depends="compile, compress">		<echo>			Building the .jar file.		</echo>	</target>	<target name="compile">		<javac srcdir=“Random/src/net/codehobby”/>	</target>	<target name="compress">		<jar jarfile="Project.jar" basedir="." includes="*.class" />	</target></project>
