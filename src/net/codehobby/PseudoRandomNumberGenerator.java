@@ -430,13 +430,17 @@ public class PseudoRandomNumberGenerator
             }
             finally
             {
-            	try {
-                    keyFileReader.close();
-		} catch (IOException e)
+            	try
+            	{
+            		if( keyFileReader != null )
+            		{
+            			keyFileReader.close();
+            		}
+            	} catch (IOException e)
                 {
                     System.err.println( "Error closing " + keyFileName );
                     e.printStackTrace();
-		} catch (Exception e)
+                } catch (Exception e)
                 {
                     System.err.println( "Error closing " + keyFileName );
                     e.printStackTrace();
@@ -515,63 +519,71 @@ public class PseudoRandomNumberGenerator
         /**
          * Checks the usage statistics from Random.org and returns whether it'll allow another request of initial values.
          * @param numBits The number of bits that are planned to be requested from Random.org.
-         * @return True if Random.org should allow for the request, ,false if it shouldn't.
+         * @return True if Random.org should allow for the request ,false if it shouldn't.
          */
         private boolean fetchUsageFromWeb( int numBits, String APIKey ) throws IOException, ProtocolException, Exception
         {
-            JsonObject jsonData = new JsonObject();
-            JsonObject jsonResponse = new JsonObject();
-            JsonObject params = new JsonObject();
-            
-            //Create the JSON data to send to Random.org.
-            jsonData.addProperty( "jsonrpc", "2.0" );
-            jsonData.addProperty( "method", "getUsage" );
-            params.addProperty( "apiKey", APIKey );
-            jsonData.add( "params", params );
-            jsonData.addProperty( "id", UUID.randomUUID().toString() );
-            //System.out.println( jsonData.toString() );
-            
-            jsonResponse = fetchFromWeb( jsonData );
-            
-            //Take the data from the response and put it in the initialization data.
-            //System.out.println( jsonResponse.toString() );
-            if( jsonResponse.has("error") )
-            {
-                System.err.println( "In fetchUsageFromWeb(...), JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
-                System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
-                throw new Exception( "JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
-            }
-            else
-            {
-                String status = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("status").getAsString();
-                if( status.contentEquals("paused") )
-                {//If the API Key is paused by Random.org, return false.
-                    System.err.println( "The API Key is paused." );
-                    return false;
-                }
-                else
-                {
-                    long requestsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
-                    if( requestsLeft < 1 )
-                    {//If there aren't any more requests left, return false.
-                        System.err.println( "There are no requests left. The requestsLeft field returned by Random.org is " + requestsLeft );
-                        return false;
-                    }
-                    else
-                    {
-                        long bitsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
-                        if( bitsLeft < numBits )
-                        {//If there aren't any more requests left, return false.
-                            System.err.println( "There aren't enough bits left to request. Random.org says it'll only allow a request of up to " + bitsLeft + " bits.");
-                            return false;
-                        }
-                        else
-                        {//There is nothing blocking the request per Random.org. Return true.
-                            return true;
-                        }
-                    }
-                }
-            }
+        	if( APIKey != "" )
+        	{
+	            JsonObject jsonData = new JsonObject();
+	            JsonObject jsonResponse = new JsonObject();
+	            JsonObject params = new JsonObject();
+	            
+	            //Create the JSON data to send to Random.org.
+	            jsonData.addProperty( "jsonrpc", "2.0" );
+	            jsonData.addProperty( "method", "getUsage" );
+	            params.addProperty( "apiKey", APIKey );
+	            jsonData.add( "params", params );
+	            jsonData.addProperty( "id", UUID.randomUUID().toString() );
+	            //System.out.println( jsonData.toString() );
+	            
+	            jsonResponse = fetchFromWeb( jsonData );
+	            
+	            //Take the data from the response and put it in the initialization data.
+	            //System.out.println( jsonResponse.toString() );
+	            if( jsonResponse.has("error") )
+	            {
+	                System.err.println( "In fetchUsageFromWeb(...), JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
+	                System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+	                throw new Exception( "JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+	            }
+	            else
+	            {
+	                String status = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("status").getAsString();
+	                if( status.contentEquals("paused") )
+	                {//If the API Key is paused by Random.org, return false.
+	                    System.err.println( "The API Key is paused." );
+	                    return false;
+	                }
+	                else
+	                {
+	                    long requestsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
+	                    if( requestsLeft < 1 )
+	                    {//If there aren't any more requests left, return false.
+	                        System.err.println( "There are no requests left. The requestsLeft field returned by Random.org is " + requestsLeft );
+	                        return false;
+	                    }
+	                    else
+	                    {
+	                        long bitsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
+	                        if( bitsLeft < numBits )
+	                        {//If there aren't any more requests left, return false.
+	                            System.err.println( "There aren't enough bits left to request. Random.org says it'll only allow a request of up to " + bitsLeft + " bits.");
+	                            return false;
+	                        }
+	                        else
+	                        {//There is nothing blocking the request per Random.org. Return true.
+	                            return true;
+	                        }
+	                    }
+	                }
+	            }
+        	}
+        	else
+        	{
+        		System.err.println( "In fetchUsageFromWeb(...), APIKey is empty." );
+        		return false;
+        	}
         }
         
         /**
