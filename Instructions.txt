@@ -5,7 +5,7 @@ How to run this java application:
 
 3. Now just run the jar file like you normally would. Remember to keep APIKey.txt in the same directory as the jar file. For optional command line arguments see below.
 
-Command line arguments:
+Optional Command line arguments:
 -h 			for hex output (otherwise binary output)
 -o "filename"		to output to a file
 -n #			to specify how many random sets to generate
