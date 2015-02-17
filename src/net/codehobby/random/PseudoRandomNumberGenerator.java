@@ -265,131 +265,115 @@ public class PseudoRandomNumberGenerator
 		return bytesToHex( generate() );
 	}
 
-        /**
-         * Returns a string representation of the value of the bites parameter in hex format.
-         * 
-         * @param bites The binary data to format as a hex string.
-         * @return A string representation in hex format of the binary data in bites.
-         */
-        public static String bytesToHex( byte[] bites )
-        {//Convert an array of bytes to a hex string for printing.
-            StringBuilder strBuilder = new StringBuilder();
-            
-            for( byte bite : bites )
-            {//Go through each byte and append it to the string as a couple hex characters.
-                strBuilder.append( String.format("%02x", bite&0xff) );
-            }
-            
-            return strBuilder.toString();
-        }
-        
-        /**
-         * Interprets hexValue as a string of a hexadecimal number and returns an array of bytes equivalent to that number.
-         * @param hexValue A string with a hexadecimal number inside.
-         * @return An array of bytes corresponding to the value of the number in hexValue.
-         */
-        public static byte[] hexToBytes( String hexValue )
-        {
-            //List<Byte> bites = new ArrayList<Byte>();
-            
-            byte[] bites = new byte[hexValue.length()/2];
-            for( int i = 0; i < hexValue.length(); i+=2 )
-            {//Go through each 2 characters and add them as bytes to bites.
-                bites[i/2] = Byte.parseByte(hexValue.substring(i, i+1), 16);
-            }
-            
-            return bites;
-            //return new BigInteger( hexValue, 16 ).toByteArray();
-        }
-        
-        /**
-         * Gets some random data from the web and uses that data to set initializationVector, key and counter. 
-         * Currently set to get data from Random.org's API.
-         */
-        public void getRandomDataFromWeb()
-        {
-            //Get the API Key from the file APIKey.txt
-            int numBitsPerBlob = 128;//The number of bits to request per BLOB from Random.org.
-            int numBlobs = 4;//The number of BLOBs to request from Random.org.
-            
-            
-            //Uee the API key to get some random data from Random.org
-            //See https://api.random.org/json-rpc/1/request-builder
-            //See the method around line 2068 of RandomOrgClient.java of the project at https://github.com/RandomOrg/JSON-RPC-Java
-            //System.err.println( "The part to contact Random.org hasn't been finished yet.");
-            
-            JsonObject jsonData = new JsonObject();
-            JsonObject jsonResponse = new JsonObject();
-            JsonObject params = new JsonObject();
-            
-            //System.err.println( "Add a check to make sure it's not going over Random.org's request limit" );
-            
-            //Create the JSON data to send to Random.org.
-            jsonData.addProperty( "jsonrpc", "2.0" );
-            jsonData.addProperty( "method", "generateBlobs" );
-            params.addProperty( "apiKey", APIKey );
-            params.addProperty( "n", numBlobs );
-            params.addProperty( "size", numBitsPerBlob );
-            params.addProperty( "format", "hex" );
-            jsonData.add( "params", params );
-            jsonData.addProperty( "id", UUID.randomUUID().toString() );
-            //System.out.println( jsonData.toString() );
-            
-            try
-            {
-                if( fetchUsageFromWeb(numBitsPerBlob*numBlobs, APIKey) )
-                {//If the request is authorized by Random.org, go ahead and make it.
-                    jsonResponse = fetchFromWeb( jsonData );
-                }
+	/**
+	 * Returns a string representation of the value of the bites parameter in hex format.
+	 * 
+	 * @param bites The binary data to format as a hex string.
+	 * @return A string representation in hex format of the binary data in bites.
+	 */
+	public static String bytesToHex( byte[] bites )
+	{//Convert an array of bytes to a hex string for printing.
+		StringBuilder strBuilder = new StringBuilder();
 
-                //Take the data from the response and put it in the initialization data.
-                //System.out.println( jsonResponse.toString() );
-                if( jsonResponse.has("error") )
-                {
-                    System.err.println( "In getRandomDataFromWeb(), error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
-                    System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
-                }
-                else
-                {
-                    JsonArray randomBlobs = jsonResponse.getAsJsonObject("result").getAsJsonObject("random").getAsJsonArray("data");
-                    setIV( hexToBytes(randomBlobs.get(0).getAsString()) );//Assign the IV to the first blob.
-                    setCounter( hexToBytes(randomBlobs.get(1).getAsString()) );//Assign the counter to the second blob.
-                    setEncryptionKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
-                    /*
-                    for( int i = 0; i < randomBlobs.size(); i++ )
-                    {
-                        System.out.println( randomBlobs.get(i).getAsString() );
-                    }
-                    */
-                    //System.err.println( "Add something to add the returned values to the initialization values.");
-                }
-            } catch( MalformedURLException ex ) {
-                System.err.println( "The URL was malformed." );
-                System.err.println( "Error Message: " + ex.getMessage() );
-                ex.printStackTrace();
-                setDefaultInitValues();
-            } catch( SocketTimeoutException e ) {
-                System.err.println( "The connection to Random.org timed out." );
-                System.err.println( "Error Message: " + e.getMessage() );
-                e.printStackTrace();
-                setDefaultInitValues();
-            } catch (ProtocolException ex) {
-                System.err.println( "The protocol (probably POST protocol) isn't supported." );
-                System.err.println( "Error Message: " + ex.getMessage() );
-                ex.printStackTrace();
-                setDefaultInitValues();
-            } catch (IOException ex) {
-                System.err.println( "Input/Output exception." );
-                System.err.println( "Error Message: " + ex.getMessage() );
-                ex.printStackTrace();
-                setDefaultInitValues();
-            } catch (Exception ex) {
-                System.err.println( "Exception: " + ex.getMessage() );
-                ex.printStackTrace();
-                setDefaultInitValues();
-            }
+		for( byte bite : bites )
+		{//Go through each byte and append it to the string as a couple hex characters.
+			strBuilder.append( String.format("%02x", bite&0xff) );
+		}
             
-        }
+		return strBuilder.toString();
+	}
+        
+	/**
+	 * Interprets hexValue as a string of a hexadecimal number and returns an array of bytes equivalent to that number.
+	 * @param hexValue A string with a hexadecimal number inside.
+	 * @return An array of bytes corresponding to the value of the number in hexValue.
+	 */
+	public static byte[] hexToBytes( String hexValue )
+	{
+		byte[] bites = new byte[hexValue.length()/2];
+		for( int i = 0; i < hexValue.length(); i+=2 )
+		{//Go through each 2 characters and add them as bytes to bites.
+			bites[i/2] = Byte.parseByte(hexValue.substring(i, i+1), 16);
+		}
+
+		return bites;
+	}
+        
+	/**
+	 * Gets some random data from the web and uses that data to set initializationVector, key and counter. 
+	 * Currently set to get data from Random.org's API.
+	 */
+	public void getRandomDataFromWeb()
+	{
+		//Get the API Key from the file APIKey.txt
+		int numBitsPerBlob = 128;//The number of bits to request per BLOB from Random.org.
+		int numBlobs = 4;//The number of BLOBs to request from Random.org.
+
+		//Use the API key to get some random data from Random.org
+		//See https://api.random.org/json-rpc/1/request-builder
+		//See the method around line 2068 of RandomOrgClient.java of the project at https://github.com/RandomOrg/JSON-RPC-Java
+		//System.err.println( "The part to contact Random.org hasn't been finished yet.");
+
+		JsonObject jsonData = new JsonObject();
+		JsonObject jsonResponse = new JsonObject();
+		JsonObject params = new JsonObject();
+
+		//Create the JSON data to send to Random.org.
+		jsonData.addProperty( "jsonrpc", "2.0" );
+		jsonData.addProperty( "method", "generateBlobs" );
+		params.addProperty( "apiKey", APIKey );
+		params.addProperty( "n", numBlobs );
+		params.addProperty( "size", numBitsPerBlob );
+		params.addProperty( "format", "hex" );
+		jsonData.add( "params", params );
+		jsonData.addProperty( "id", UUID.randomUUID().toString() );
+            
+		try
+		{
+			if( fetchUsageFromWeb(numBitsPerBlob*numBlobs, APIKey) )
+			{//If the request is authorized by Random.org, go ahead and make it.
+				jsonResponse = fetchFromWeb( jsonData );
+			}
+
+			//Take the data from the response and put it in the initialization data.
+			if( jsonResponse.has("error") )
+			{
+				System.err.println( "In getRandomDataFromWeb(), error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
+				System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+			}
+			else
+			{
+				JsonArray randomBlobs = jsonResponse.getAsJsonObject("result").getAsJsonObject("random").getAsJsonArray("data");
+				setIV( hexToBytes(randomBlobs.get(0).getAsString()) );//Assign the IV to the first blob.
+				setCounter( hexToBytes(randomBlobs.get(1).getAsString()) );//Assign the counter to the second blob.
+				setEncryptionKey( hexToBytes(randomBlobs.get(2).getAsString() + randomBlobs.get(3).getAsString()) );//Assign the key to the third and fourth blobs since it needs 256 bits.
+			}
+		} catch( MalformedURLException ex ) {
+			System.err.println( "The URL was malformed." );
+			System.err.println( "Error Message: " + ex.getMessage() );
+			ex.printStackTrace();
+			setDefaultInitValues();
+		} catch( SocketTimeoutException e ) {
+			System.err.println( "The connection to Random.org timed out." );
+			System.err.println( "Error Message: " + e.getMessage() );
+			e.printStackTrace();
+			setDefaultInitValues();
+		} catch (ProtocolException ex) {
+			System.err.println( "The protocol (probably POST protocol) isn't supported." );
+			System.err.println( "Error Message: " + ex.getMessage() );
+			ex.printStackTrace();
+			setDefaultInitValues();
+		} catch (IOException ex) {
+			System.err.println( "Input/Output exception." );
+			System.err.println( "Error Message: " + ex.getMessage() );
+			ex.printStackTrace();
+			setDefaultInitValues();
+		} catch (Exception ex) {
+			System.err.println( "Exception: " + ex.getMessage() );
+			ex.printStackTrace();
+			setDefaultInitValues();
+		}
+	}
         
         /**
          * Gets the Random.org API key from the file pointed to by keyFileName.
