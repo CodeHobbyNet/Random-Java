@@ -375,200 +375,185 @@ public class PseudoRandomNumberGenerator
 		}
 	}
         
-        /**
-         * Gets the Random.org API key from the file pointed to by keyFileName.
-         */
-        public void fetchAPIKeyFromFile()
-        {
-            fetchAPIKeyFromFile( keyFileName );
-/*
-            try {
-                BufferedReader keyFileReader = new BufferedReader( new FileReader(keyFileName) );
-                APIKey = keyFileReader.readLine();
-            } catch (FileNotFoundException ex) {
-                System.err.println( keyFileName + " wasn't found." );
-                setDefaultInitValues();
-            } catch (IOException ex) {
-                System.err.println( "Error reading " + keyFileName );
-                setDefaultInitValues();
-            }
-*/
-        }
+	/**
+	 * Gets the Random.org API key from the file pointed to by keyFileName.
+	 */
+	public void fetchAPIKeyFromFile()
+	{
+		fetchAPIKeyFromFile( keyFileName );
+	}
         
-        /**
-         * Gets the Random.org API key from the file pointed to by tempKeyFileName. The file should be a text file with only the key in it.
-         * @param tempKeyFileName The filename of the file containing the Random.org API key.
-         */
-        public void fetchAPIKeyFromFile( String tempKeyFileName )
-        {
-        	BufferedReader keyFileReader = null;
-            try {
-                keyFileReader = new BufferedReader( new FileReader(tempKeyFileName) );
-                APIKey = keyFileReader.readLine();
-            } catch (FileNotFoundException ex) {
-                System.err.println( keyFileName + " wasn't found." );
-                setDefaultInitValues();
-            } catch (IOException ex) {
-                System.err.println( "Error reading " + keyFileName );
-                setDefaultInitValues();
-            }
-            finally
-            {
-            	try
-            	{
-            		if( keyFileReader != null )
-            		{
-            			keyFileReader.close();
-            		}
-            	} catch (IOException e)
-                {
-                    System.err.println( "Error closing " + keyFileName );
-                    e.printStackTrace();
-                } catch (Exception e)
-                {
-                    System.err.println( "Error closing " + keyFileName );
-                    e.printStackTrace();
+	/**
+	 * Gets the Random.org API key from the file pointed to by tempKeyFileName. The file should be a text file with only the key in it.
+	 * @param tempKeyFileName The filename of the file containing the Random.org API key.
+	 */
+	public void fetchAPIKeyFromFile( String tempKeyFileName )
+	{
+		BufferedReader keyFileReader = null;
+		try {
+			keyFileReader = new BufferedReader( new FileReader(tempKeyFileName) );
+			APIKey = keyFileReader.readLine();
+		} catch (FileNotFoundException ex) {
+			System.err.println( keyFileName + " wasn't found." );
+			setDefaultInitValues();
+		} catch (IOException ex) {
+			System.err.println( "Error reading " + keyFileName );
+			setDefaultInitValues();
 		}
-            }
-        }
-        
-        /**
-         * Takes a request for Random.org as a JSON object, sends it to Random.org and returns the output as another JSON object.
-         * @param jsonRequest The request as a JSON object.
-         * @return The output from Random.org as a JSON object.
-         * @throws MalformedURLException
-         * @throws ProtocolException
-         * @throws IOException
-         * @throws Exception 
-         */
-        private JsonObject fetchFromWeb( JsonObject jsonRequest ) throws MalformedURLException, ProtocolException, IOException, Exception
-        {
-            String URLText = "https://api.random.org/json-rpc/1/invoke";
-            HttpsURLConnection connection = (HttpsURLConnection) new URL( URLText ).openConnection();//Open the connection.
-            connection.setConnectTimeout(5000);//Set the timeout to 5 seconds.
-            
-            //Set the headers
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            
-            //Send the request with the JSON and get the response
-            connection.setDoOutput( true );
-            DataOutputStream outputStream = new DataOutputStream( connection.getOutputStream() );
-            outputStream.writeBytes( jsonRequest.toString() );
-            outputStream.flush();
-            outputStream.close();
-            int responseCode = connection.getResponseCode();
-            
-            if( responseCode == HttpsURLConnection.HTTP_OK )
-            {//If the response code is ok, get the json data returned by Random.org.
-                BufferedReader inputReader = new BufferedReader( new InputStreamReader(connection.getInputStream()) );//Establish the input reader.
-                String inputLine;
-                StringBuffer inputBuffer = new StringBuffer();
-                
-                while( (inputLine = inputReader.readLine()) != null )
-                {//Take each line from the reader and append them to the buffer until there are no more lines from the reader.
-                    inputBuffer.append( inputLine );
-                }
-                
-                //Close the reader.
-                inputReader.close();
-                
-                //Parse the buffer into a json object and return it.
-                return new JsonParser().parse( inputBuffer.toString() ).getAsJsonObject();
-            }
-            else
-            {
-                System.err.println( "Error " + responseCode + ": " + connection.getResponseMessage() );
-                throw new Exception( "Error " + responseCode + ": " + connection.getResponseMessage() );
-            }
-        }
-        
-        /**
-         * Sets some default initialization values. 
-         * Using this method isn't ideal since the values returned will be less random, but it's better than 
-         * returning no pseudo-random values.
-         */
-        private void setDefaultInitValues()
-        {
-            BigInteger newInitializationVector = new BigInteger( "1A024F91E8150033B974CD817BA67EB4", 16 );
-            BigInteger newCounter = new BigInteger( "7486667286DEEB44A3C7C89658C73B25", 16 );
-            BigInteger newKey = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D08", 16 );
-            //BigInteger key = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D0837", 16 );
+		finally
+		{
+			try
+			{
+				if( keyFileReader != null )
+				{
+					keyFileReader.close();
+				}
+			} catch (IOException e)
+			{
+				System.err.println( "Error closing " + keyFileName );
+				e.printStackTrace();
+			} catch (Exception e)
+			{
+				System.err.println( "Error closing " + keyFileName );
+				e.printStackTrace();
+			}
+		}
+	}
 
-            setIV( newInitializationVector.toByteArray() );
-            setCounter( newCounter.toByteArray() );
-            setEncryptionKey( newKey.toByteArray() );
-        }
+	/**
+	 * Takes a request for Random.org as a JSON object, sends it to Random.org and returns the output as another JSON object.
+	 * @param jsonRequest The request as a JSON object.
+	 * @return The output from Random.org as a JSON object.
+	 * @throws MalformedURLException
+	 * @throws ProtocolException
+	 * @throws IOException
+	 * @throws Exception 
+	 */
+	private JsonObject fetchFromWeb( JsonObject jsonRequest ) throws MalformedURLException, ProtocolException, IOException, Exception
+	{
+		String URLText = "https://api.random.org/json-rpc/1/invoke";
+		HttpsURLConnection connection = (HttpsURLConnection) new URL( URLText ).openConnection();//Open the connection.
+		connection.setConnectTimeout(5000);//Set the timeout to 5 seconds.
+
+		//Set the headers
+		connection.setRequestMethod("POST");
+		connection.setRequestProperty("Content-Type", "application/json");
+
+		//Send the request with the JSON and get the response
+		connection.setDoOutput( true );
+		DataOutputStream outputStream = new DataOutputStream( connection.getOutputStream() );
+		outputStream.writeBytes( jsonRequest.toString() );
+		outputStream.flush();
+		outputStream.close();
+		int responseCode = connection.getResponseCode();
+
+		if( responseCode == HttpsURLConnection.HTTP_OK )
+		{//If the response code is ok, get the json data returned by Random.org.
+			BufferedReader inputReader = new BufferedReader( new InputStreamReader(connection.getInputStream()) );//Establish the input reader.
+			String inputLine;
+			StringBuffer inputBuffer = new StringBuffer();
+
+			while( (inputLine = inputReader.readLine()) != null )
+			{//Take each line from the reader and append them to the buffer until there are no more lines from the reader.
+				inputBuffer.append( inputLine );
+			}
+
+			//Close the reader.
+			inputReader.close();
+
+			//Parse the buffer into a json object and return it.
+			return new JsonParser().parse( inputBuffer.toString() ).getAsJsonObject();
+		}
+		else
+		{
+			System.err.println( "Error " + responseCode + ": " + connection.getResponseMessage() );
+			throw new Exception( "Error " + responseCode + ": " + connection.getResponseMessage() );
+		}
+	}
         
-        /**
-         * Checks the usage statistics from Random.org and returns whether it'll allow another request of initial values.
-         * @param numBits The number of bits that are planned to be requested from Random.org.
-         * @return True if Random.org should allow for the request ,false if it shouldn't.
-         */
-        private boolean fetchUsageFromWeb( int numBits, String APIKey ) throws IOException, ProtocolException, Exception
-        {
-        	if( APIKey != "" )
-        	{
-	            JsonObject jsonData = new JsonObject();
-	            JsonObject jsonResponse = new JsonObject();
-	            JsonObject params = new JsonObject();
-	            
-	            //Create the JSON data to send to Random.org.
-	            jsonData.addProperty( "jsonrpc", "2.0" );
-	            jsonData.addProperty( "method", "getUsage" );
-	            params.addProperty( "apiKey", APIKey );
-	            jsonData.add( "params", params );
-	            jsonData.addProperty( "id", UUID.randomUUID().toString() );
-	            //System.out.println( jsonData.toString() );
-	            
-	            jsonResponse = fetchFromWeb( jsonData );
-	            
-	            //Take the data from the response and put it in the initialization data.
-	            //System.out.println( jsonResponse.toString() );
-	            if( jsonResponse.has("error") )
-	            {
-	                System.err.println( "In fetchUsageFromWeb(...), JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
-	                System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
-	                throw new Exception( "JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
-	            }
-	            else
-	            {
-	                String status = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("status").getAsString();
-	                if( status.contentEquals("paused") )
-	                {//If the API Key is paused by Random.org, return false.
-	                    System.err.println( "The API Key is paused." );
-	                    return false;
-	                }
-	                else
-	                {
-	                    long requestsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
-	                    if( requestsLeft < 1 )
-	                    {//If there aren't any more requests left, return false.
-	                        System.err.println( "There are no requests left. The requestsLeft field returned by Random.org is " + requestsLeft );
-	                        return false;
-	                    }
-	                    else
-	                    {
-	                        long bitsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
-	                        if( bitsLeft < numBits )
-	                        {//If there aren't any more requests left, return false.
-	                            System.err.println( "There aren't enough bits left to request. Random.org says it'll only allow a request of up to " + bitsLeft + " bits.");
-	                            return false;
-	                        }
-	                        else
-	                        {//There is nothing blocking the request per Random.org. Return true.
-	                            return true;
-	                        }
-	                    }
-	                }
-	            }
-        	}
-        	else
-        	{
-        		System.err.println( "In fetchUsageFromWeb(...), APIKey is empty." );
-        		return false;
-        	}
-        }
+	/**
+	 * Sets some default initialization values. 
+	 * Using this method isn't ideal since the values returned will be less random, but it's better than 
+	 * returning no pseudo-random values.
+	 */
+	private void setDefaultInitValues()
+	{
+		BigInteger newInitializationVector = new BigInteger( "1A024F91E8150033B974CD817BA67EB4", 16 );
+		BigInteger newCounter = new BigInteger( "7486667286DEEB44A3C7C89658C73B25", 16 );
+		BigInteger newKey = new BigInteger( "D373838825F7123B81E45C52EF8DA2BEB5582B44EC0231AD99EE598A894D08", 16 );
+
+		setIV( newInitializationVector.toByteArray() );
+		setCounter( newCounter.toByteArray() );
+		setEncryptionKey( newKey.toByteArray() );
+	}
+        
+	/**
+	 * Checks the usage statistics from Random.org and returns whether it'll allow another request of initial values.
+	 * @param numBits The number of bits that are planned to be requested from Random.org.
+	 * @return True if Random.org should allow for the request ,false if it shouldn't.
+	 */
+	private boolean fetchUsageFromWeb( int numBits, String APIKey ) throws IOException, ProtocolException, Exception
+	{
+		if( APIKey != "" )
+		{
+			JsonObject jsonData = new JsonObject();
+			JsonObject jsonResponse = new JsonObject();
+			JsonObject params = new JsonObject();
+
+			//Create the JSON data to send to Random.org.
+			jsonData.addProperty( "jsonrpc", "2.0" );
+			jsonData.addProperty( "method", "getUsage" );
+			params.addProperty( "apiKey", APIKey );
+			jsonData.add( "params", params );
+			jsonData.addProperty( "id", UUID.randomUUID().toString() );
+
+			jsonResponse = fetchFromWeb( jsonData );
+
+			//Take the data from the response and put it in the initialization data.
+			if( jsonResponse.has("error") )
+			{
+				System.err.println( "In fetchUsageFromWeb(...), JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" );
+				System.err.println( jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+				throw new Exception( "JSON Error number " + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("code").getAsString() + " was returned with message:" + jsonResponse.getAsJsonObject("error").getAsJsonPrimitive("message").getAsString() );
+			}
+			else
+			{
+				String status = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("status").getAsString();
+				if( status.contentEquals("paused") )
+				{//If the API Key is paused by Random.org, return false.
+					System.err.println( "The API Key is paused." );
+					return false;
+				}
+				else
+				{
+					long requestsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
+					if( requestsLeft < 1 )
+					{//If there aren't any more requests left, return false.
+						System.err.println( "There are no requests left. The requestsLeft field returned by Random.org is " + requestsLeft );
+						return false;
+					}
+					else
+					{
+						long bitsLeft = jsonResponse.getAsJsonObject("result").getAsJsonPrimitive("requestsLeft").getAsLong();
+						if( bitsLeft < numBits )
+						{//If there aren't any more requests left, return false.
+							System.err.println( "There aren't enough bits left to request. Random.org says it'll only allow a request of up to " + bitsLeft + " bits.");
+							return false;
+						}
+						else
+						{//There is nothing blocking the request per Random.org. Return true.
+							return true;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			System.err.println( "In fetchUsageFromWeb(...), APIKey is empty." );
+			return false;
+		}
+	}
         
         /**
          * Saves some pseudo-random data to a file either as hex or bytes.
