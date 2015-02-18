@@ -555,56 +555,52 @@ public class PseudoRandomNumberGenerator
 		}
 	}
         
-        /**
-         * Saves some pseudo-random data to a file either as hex or bytes.
-         * @param filename The filename of the file to save data to.
-         * @param numGroups The number of outputs of generate to save.
-         * @param asHex
-         * @throws Exception If an exception is generated during the generation of the pseudo-random data.
-         */
-        public void savePseudoRandomDataToFile( String filename, long numGroups, boolean asHex ) throws Exception
-        {
-            DataOutputStream binaryOutput = null;
-            BufferedWriter textWriter = null;
-            try {
-                binaryOutput = new DataOutputStream( new FileOutputStream(filename, true) );//Create the file output stream. Will append to the file.
-                textWriter = new BufferedWriter( new FileWriter(filename, true) );
-                
-                int i = 0;
-                while( i < numGroups )
-                {//Iterate until it gets to the number of groups as a parameter.
-                    byte[] group = generate();//Generate the pseudo-random data
-                    if( asHex )
-                    {
-                        textWriter.write( bytesToHex(group) + "\n" );//Write the random data as hex to the file.
-                    }
-                    else
-                    {
-                        //System.out.println( "Writing as binary." );
-                        for( byte bite : group )
-                        {
-                            binaryOutput.writeByte(bite);
-                        }
-                    }
-                    
-                    i++;
-                }
-                
-                
-                
-            } catch (FileNotFoundException ex) {
-                System.err.println( "File not found error for file \"" + filename + "\": ");
-                System.err.println( ex.getMessage() );
-                ex.printStackTrace();
-            } catch (IOException ex) {
-                System.err.println( "IO Exception for file \"" + filename + "\": ");
-                System.err.println( ex.getMessage() );
-                ex.printStackTrace();
-            }
-            finally
-            {
-                //binaryOutput.close();//Close the file.
-                textWriter.close();//Close the file.
-            }
-        }
+	/**
+	 * Saves some pseudo-random data to a file either as hex or bytes.
+	 * @param filename The filename of the file to save data to.
+	 * @param numGroups The number of outputs of generate to save.
+	 * @param asHex
+	 * @throws Exception If an exception is generated during the generation of the pseudo-random data.
+	 */
+	public void savePseudoRandomDataToFile( String filename, long numGroups, boolean asHex ) throws Exception
+	{
+		DataOutputStream binaryOutput = null;
+		BufferedWriter textWriter = null;
+		try {
+			binaryOutput = new DataOutputStream( new FileOutputStream(filename, true) );//Create the file output stream. Will append to the file.
+			textWriter = new BufferedWriter( new FileWriter(filename, true) );
+
+			int i = 0;
+			while( i < numGroups )
+			{//Iterate until it gets to the number of groups as a parameter.
+				byte[] group = generate();//Generate the pseudo-random data
+				if( asHex )
+				{
+					textWriter.write( bytesToHex(group) + "\n" );//Write the random data as hex to the file.
+				}
+				else
+				{
+					for( byte bite : group )
+					{
+						binaryOutput.writeByte(bite);
+					}
+				}
+
+				i++;
+			}
+
+		} catch (FileNotFoundException ex) {
+			System.err.println( "File not found error for file \"" + filename + "\": ");
+			System.err.println( ex.getMessage() );
+			ex.printStackTrace();
+		} catch (IOException ex) {
+			System.err.println( "IO Exception for file \"" + filename + "\": ");
+			System.err.println( ex.getMessage() );
+			ex.printStackTrace();
+		}
+		finally
+		{
+			textWriter.close();//Close the file.
+		}
+	}
 }
