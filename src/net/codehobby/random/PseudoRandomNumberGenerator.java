@@ -251,7 +251,7 @@ public class PseudoRandomNumberGenerator
 	 */
 	public BigInteger getPseudoRandomBigIntegerRange( BigInteger low, BigInteger high ) throws Exception
 	{
-		return (new BigInteger(generate())).abs().mod(low).add(high);
+		return (new BigInteger(generate())).abs().mod(high.subtract(low).add(new BigInteger("1"))).add(low);
 	}
 
 	/**
